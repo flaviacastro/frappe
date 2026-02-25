@@ -1,22 +1,22 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: frappe\n"
+"Project-Id-Version: dut-labs-test\n"
 "Report-Msgid-Bugs-To: developers@frappe.io\n"
 "POT-Creation-Date: 2026-02-22 09:42+0000\n"
-"PO-Revision-Date: 2026-02-23 22:07\n"
+"PO-Revision-Date: 2026-02-25 20:38\n"
 "Last-Translator: developers@frappe.io\n"
-"Language-Team: Portuguese\n"
+"Language-Team: Portuguese, Brazilian\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Crowdin-Project: frappe\n"
-"X-Crowdin-Project-ID: 639578\n"
-"X-Crowdin-Language: pt-PT\n"
-"X-Crowdin-File: /[frappe.frappe] develop/frappe/locale/main.pot\n"
-"X-Crowdin-File-ID: 52\n"
-"Language: pt_PT\n"
+"X-Crowdin-Project: dut-labs-test\n"
+"X-Crowdin-Project-ID: 875476\n"
+"X-Crowdin-Language: pt-BR\n"
+"X-Crowdin-File: /develop/frappe/locale/main.pot\n"
+"X-Crowdin-File-ID: 8\n"
+"Language: pt_BR\n"
 
 #: frappe/public/js/frappe/ui/page.html:49
 msgid " You are impersonating as another user."
@@ -26,7 +26,7 @@ msgstr " Está a representar outro utilizador."
 #. Condition'
 #: frappe/core/doctype/document_naming_rule_condition/document_naming_rule_condition.json
 msgid "!="
-msgstr "!="
+msgstr ""
 
 #. Description of the 'Org History Heading' (Data) field in DocType 'About Us
 #. Settings'
@@ -55,7 +55,7 @@ msgstr ""
 #: frappe/public/js/frappe/ui/toolbar/tag_utils.js:21
 #: frappe/public/js/frappe/ui/toolbar/tag_utils.js:22
 msgid "#{0}"
-msgstr "#{0}"
+msgstr ""
 
 #: frappe/core/report/database_storage_usage_by_tables/database_storage_usage_by_tables.js:36
 msgid "${values.doctype_name} has been added to queue for optimization"
@@ -265,13 +265,13 @@ msgstr "; não é permitido na condição"
 #. Condition'
 #: frappe/core/doctype/document_naming_rule_condition/document_naming_rule_condition.json
 msgid "<"
-msgstr "<"
+msgstr ""
 
 #. Option for the 'Condition' (Select) field in DocType 'Document Naming Rule
 #. Condition'
 #: frappe/core/doctype/document_naming_rule_condition/document_naming_rule_condition.json
 msgid "<="
-msgstr "<="
+msgstr ""
 
 #. Description of the 'Generate Keys' (Button) field in DocType 'User'
 #: frappe/core/doctype/user/user.json
@@ -706,7 +706,7 @@ msgstr ""
 #. Option for the 'Script Type' (Select) field in DocType 'Server Script'
 #: frappe/core/doctype/server_script/server_script.json
 msgid "API"
-msgstr "API"
+msgstr ""
 
 #. Label of the api_access (Section Break) field in DocType 'User'
 #: frappe/core/doctype/user/user.json
@@ -14842,7 +14842,7 @@ msgstr ""
 #. Label of the layout (Code) field in DocType 'Desktop Layout'
 #: frappe/desk/doctype/desktop_layout/desktop_layout.json
 msgid "Layout"
-msgstr "Layout"
+msgstr ""
 
 #: frappe/custom/doctype/customize_form/customize_form.js:194
 msgid "Layout Reset"
@@ -32092,7 +32092,7 @@ msgstr ""
 
 #: frappe/public/js/frappe/utils/pretty_date.js:37
 msgid "{0} M"
-msgstr "{0} M"
+msgstr ""
 
 #: frappe/public/js/frappe/views/map/map_view.js:14
 msgid "{0} Map"
@@ -32808,7 +32808,7 @@ msgstr ""
 #: frappe/utils/data.py:1570
 msgctxt "Money in words"
 msgid "{0}."
-msgstr "{0}."
+msgstr ""
 
 #: frappe/utils/print_format.py:151 frappe/utils/print_format.py:195
 msgid "{0}/{1} complete | Please leave this tab open until completion."
