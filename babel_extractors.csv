@@ -17,3 +17,4 @@
 **.vue,frappe.gettext.extractors.html_template.extract
 **/custom/*.json,frappe.gettext.extractors.customization.extract
 **/fixtures/custom_field.json,frappe.gettext.extractors.custom_field.extract
+**/dashboard_chart/*/*.json,frappe.frappe.gettext.extractors.dashboard_chart.extract
