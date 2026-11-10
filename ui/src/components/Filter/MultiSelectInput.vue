@@ -40,6 +40,6 @@ const options = computed(() =>
 		.split("\n")
 		.map((o) => o.trim())
 		.filter(Boolean)
-		.map((o) => ({ label: o, value: o }))
+		.map((o) => ({ label: __(o), value: o }))
 );
 </script>
