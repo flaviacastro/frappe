@@ -20,6 +20,7 @@
 		v-if="!model.length"
 		:options="addableOptions"
 		:modelValue="null"
+		:placeholder="__('Select field')"
 		@update:selectedOption="addSort"
 	>
 		<template #trigger>
@@ -128,6 +129,7 @@
 					<Combobox
 						:options="addableOptions"
 						:modelValue="null"
+						:placeholder="__('Select field')"
 						@update:selectedOption="addSort"
 					>
 						<template #trigger>

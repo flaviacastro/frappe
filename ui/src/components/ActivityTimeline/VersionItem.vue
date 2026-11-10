@@ -16,7 +16,7 @@
 					<span class="font-medium text-ink-gray-8">
 						{{ __("{0} changes", [changes.length]) }}
 					</span>
-					<span v-if="sessionSpan">{{ __("over {0}", [sessionSpan]) }}</span>
+					<span v-if="sessionSpan">{{ " " }}{{ __("over {0}", [sessionSpan]) }}</span>
 				</span>
 				<LucideChevronUp v-if="expanded" class="size-3.5" />
 				<LucideChevronDown v-else class="size-3.5" />
