@@ -17,3 +17,5 @@
 **.vue,frappe.gettext.extractors.html_template.extract
 **/custom/*.json,frappe.gettext.extractors.customization.extract
 **/fixtures/custom_field.json,frappe.gettext.extractors.custom_field.extract
+**.tsx,frappe.gettext.extractors.html_template.extract
+**.ts,frappe.gettext.extractors.html_template.extract
