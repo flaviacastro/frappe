@@ -18,14 +18,17 @@ const NO_VALUE_FIELDS = new Set([
 ]);
 
 /** Standard fields every doctype can be sorted on, appended after the meta
- *  fields (matches `crm.api.doc.sort_options`). */
-const STANDARD_FIELDS: ReadonlyArray<{ label: string; fieldname: string }> = [
-  { label: __("Name"), fieldname: "name" },
-  { label: __("Created On"), fieldname: "creation" },
-  { label: __("Last Modified"), fieldname: "modified" },
-  { label: __("Modified By"), fieldname: "modified_by" },
-  { label: __("Owner"), fieldname: "owner" },
-];
+ *  fields (matches `crm.api.doc.sort_options`). Built per call so the labels
+ *  pick up translations loaded after import. */
+function getStandardFields(): { label: string; fieldname: string }[] {
+  return [
+    { label: __("Name"), fieldname: "name" },
+    { label: __("Created On"), fieldname: "creation" },
+    { label: __("Last Modified"), fieldname: "modified" },
+    { label: __("Modified By"), fieldname: "modified_by" },
+    { label: __("Owner"), fieldname: "owner" },
+  ];
+}
 
 const toOption = (label: string, fieldname: string): SortOption => ({
   label,
@@ -39,9 +42,9 @@ const toOption = (label: string, fieldname: string): SortOption => ({
  * fields with both a label and fieldname, then append the standard fields.
  */
 export function getSortOptions(fields: RawMetaField[]): SortOption[] {
-  const fieldOptions = fields
+    const fieldOptions = fields
     .filter((f) => !NO_VALUE_FIELDS.has(f.fieldtype) && f.label && f.fieldname)
-    .map((f) => toOption(f.label as string, f.fieldname));
-  const standard = STANDARD_FIELDS.map((f) => toOption(f.label, f.fieldname));
+    .map((f) => toOption(__(f.label as string), f.fieldname));
+  const standard = getStandardFields().map((f) => toOption(f.label, f.fieldname));
   return [...fieldOptions, ...standard];
 }

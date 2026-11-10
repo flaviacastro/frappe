@@ -12,7 +12,7 @@ import type { NotificationLog, NotificationPanelProps, NotificationTab } from ".
 defineOptions({ inheritAttrs: false });
 
 const props = withDefaults(defineProps<NotificationPanelProps>(), {
-	title: "Notifications",
+	title: () => __("Notifications"),
 });
 
 const emit = defineEmits<{
