@@ -1,6 +1,7 @@
 import type { createResource } from "frappe-ui";
 import { getSocketInstance, subscribeToDoc } from "../../socket";
 import { hasUnresolvedRowOfType } from "./pendingRows";
+import { translate as __ } from "../../utils/translate";
 import type { Activity, UserInfo } from "./types";
 import { getAssignee, stripHtml } from "./utils";
 
@@ -165,7 +166,7 @@ function normalizeLiveActivity(
         data: {
           name,
           subtype: "like",
-          text: `${author.fullname} liked`,
+          text: __("{0} liked", [author.fullname]),
         },
       };
 
