@@ -123,12 +123,12 @@ import { computed } from "vue";
 import { useDoctypeMeta } from "../../composables/useDoctypeMeta";
 import { translate as __ } from "../../utils/translate";
 import {
-	AGGREGATE_FUNCTIONS,
 	aggregateKey,
 	columnId,
 	effectiveSort,
 	findGroupByField,
 	formatRating,
+	getAggregateFunctions,
 } from "./groupBy";
 import { directionFor, nextSort } from "../../experimental/List/headerSort";
 import { useColumnResize } from "../../experimental/List/useColumnResize";
@@ -174,7 +174,7 @@ const columns = computed<GroupByColumn[]>(() => [
 		};
 	}),
 	...props.groupBy.aggregates.map((a, i) => {
-		const fn = AGGREGATE_FUNCTIONS.find((f) => f.value === a.function)?.label ?? "";
+		const fn = getAggregateFunctions().find((f) => f.value === a.function)?.label ?? "";
 		const field =
 			a.function === "count" ? undefined : findGroupByField(metaFields.value, a.fieldname);
 		return {
@@ -183,7 +183,7 @@ const columns = computed<GroupByColumn[]>(() => [
 			label:
 				a.function === "count"
 					? __("Count")
-					: __("{0} of {1}", [__(fn), __(field?.label ?? a.fieldname)]),
+					: __("{0} of {1}", [fn, field?.label ?? a.fieldname]),
 			kind: "aggregate" as const,
 			align: ALIGN.aggregate,
 			fieldtype: a.function === "count" ? "Int" : field?.fieldtype,

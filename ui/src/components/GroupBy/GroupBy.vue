@@ -128,9 +128,9 @@ import { computed, nextTick, ref, watch } from "vue";
 import { useDoctypeMeta } from "../../composables/useDoctypeMeta";
 import { translate as __ } from "../../utils/translate";
 import {
-	AGGREGATE_FUNCTIONS,
 	findGroupByField,
 	getAggregateFields,
+	getAggregateFunctions,
 	getGroupByFields,
 	isAggregateTaken,
 	isCompleteAggregate,
@@ -205,8 +205,8 @@ function isTaken(i: number, aggregate: AggregateDraft) {
 
 // An aggregate already added isn't offered again, except in its own row.
 function functionOptions(i: number) {
-	return AGGREGATE_FUNCTIONS.map((f) => ({
-		label: __(f.label),
+	return getAggregateFunctions().map((f) => ({
+		label: f.label,
 		value: f.value,
 		disabled: f.value === "count" && isTaken(i, { function: "count" }),
 	}));

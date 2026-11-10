@@ -12,6 +12,7 @@ export {
   findGroupByField,
   formatRating,
   getAggregateFields,
+  getAggregateFunctions,
   getGroupByFields,
   parseGroupBy,
   serializeGroupBy,
