@@ -24,6 +24,7 @@
 		v-if="!model.length"
 		:options="allFields"
 		:modelValue="null"
+		:placeholder="__('Select field')"
 		@update:selectedOption="addFilter"
 	>
 		<template #trigger>
@@ -69,7 +70,7 @@
 				>
 					<template v-for="(f, i) in model" :key="i">
 						<div class="w-13 pl-2 text-end text-base text-ink-gray-5">
-							{{ i == 0 ? "Where" : "And" }}
+							{{ i == 0 ? __("Where") : __("And") }}
 						</div>
 						<div class="min-w-[140px]">
 							<Combobox
@@ -88,7 +89,7 @@
 								class="w-full"
 								:modelValue="f.operator"
 								:options="getOperators(f.field?.fieldtype ?? '', f.fieldname)"
-								placeholder="Equals"
+								:placeholder="__('Equals')"
 								@update:modelValue="(v) => updateOperator(v, i)"
 							/>
 						</div>
@@ -121,6 +122,7 @@
 					<Combobox
 						:options="allFields"
 						:modelValue="null"
+						:placeholder="__('Select field')"
 						@update:selectedOption="addFilter"
 					>
 						<template #trigger>

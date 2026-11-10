@@ -276,7 +276,7 @@
 	/>
 
 	<!-- Crop dialog (cropper lazily loaded) — opens over the popover. -->
-	<Dialog v-model:open="cropOpen" title="Crop image" size="4xl">
+	<Dialog v-model:open="cropOpen" :title="__('Crop image')" size="4xl">
 		<ImageCropper
 			v-if="cropOpen && cropTarget?.file"
 			:file="cropTarget.file"

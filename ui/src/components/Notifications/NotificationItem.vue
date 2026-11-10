@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Avatar, dayjs } from "frappe-ui";
+import { translate as __ } from "../../utils/translate";
 import type { NotificationItemProps, NotificationLog } from "./types";
 
 const props = defineProps<NotificationItemProps>();
@@ -48,7 +49,7 @@ function activate() {
 				class="absolute top-1/2 size-[5px] -translate-y-1/2 rounded-full bg-gray-800"
 				style="left: -10px"
 			>
-				<span class="sr-only">Unread</span>
+				<span class="sr-only">{{ __("Unread") }}</span>
 			</span>
 			<slot name="prefix" :notification="notification">
 				<Avatar :image="notification.from_user_image" :label="avatarLabel" size="lg" />

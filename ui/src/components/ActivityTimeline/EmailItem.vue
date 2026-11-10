@@ -36,16 +36,16 @@
 						class="pb-2 text-p-sm text-ink-gray-5"
 					>
 						<template
-							v-for="(val, label) in {
-								To: email.data.to,
-								cc: email.data.cc,
-								bcc: email.data.bcc,
-							}"
-							:key="label"
+							v-for="row in [
+								{ key: 'to', label: __('To'), value: email.data.to },
+								{ key: 'cc', label: __('CC'), value: email.data.cc },
+								{ key: 'bcc', label: __('BCC'), value: email.data.bcc },
+							]"
+							:key="row.key"
 						>
-							<span v-if="val" class="me-1.5">
-								<span class="me-1 text-ink-gray-7">{{ label }}:</span>
-								<span>{{ splitRecipients(val).join(", ") }}</span>
+							<span v-if="row.value" class="me-1.5">
+								<span class="me-1 text-ink-gray-7">{{ row.label }}:</span>
+								<span>{{ splitRecipients(row.value).join(", ") }}</span>
 							</span>
 						</template>
 					</div>
