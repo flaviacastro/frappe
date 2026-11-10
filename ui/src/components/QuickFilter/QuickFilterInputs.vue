@@ -29,7 +29,7 @@
 			<!-- Check → a labelled checkbox (checked ⇔ equals "Yes"). -->
 			<Checkbox
 				v-if="field.fieldtype === 'Check'"
-				:label="field.label"
+				:label="__(field.label)"
 				:modelValue="quickValue(filters, field) as boolean"
 				@update:modelValue="(v: boolean) => setValue(field, v)"
 			/>
@@ -43,7 +43,7 @@
 					:is="valueControl(field).is"
 					v-bind="valueControl(field).props"
 					class="w-full"
-					:aria-label="field.label"
+					:aria-label="__(field.label)"
 					:modelValue="displayValue(field)"
 					@update:modelValue="(v: FilterValue) => setValue(field, v)"
 				>
@@ -298,7 +298,7 @@ function bareField(field: FilterField, overrides: Partial<FieldMeta> = {}): Fiel
 		fieldname: field.fieldname,
 		fieldtype: field.fieldtype,
 		options: field.options,
-		placeholder: field.label,
+		placeholder: __(field.label),
 		...overrides,
 	};
 }
@@ -339,6 +339,6 @@ function valueControl(field: FilterField): ValueControl {
 /** With the toggle over its start, the text box keeps 2px between the toggle and the text. */
 function textControl(field: FilterField): ValueControl {
 	const inset = hasOperatorToggle(field) ? "[&_input]:ps-[26px]" : undefined;
-	return { is: TextInput, props: { type: "text", placeholder: field.label, class: inset } };
+	return { is: TextInput, props: { type: "text", placeholder: __(field.label), class: inset } };
 }
 </script>

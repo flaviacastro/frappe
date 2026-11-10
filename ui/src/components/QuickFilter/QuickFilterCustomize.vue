@@ -28,7 +28,7 @@
 		@update:modelValue="reorder"
 	>
 		<template #item="{ element: field }">
-			<Button class="quick-filter-chip group whitespace-nowrap" :label="field.label">
+			<Button class="quick-filter-chip group whitespace-nowrap" :label="__(field.label)">
 				<template #prefix>
 					<span
 						class="quick-filter-drag-handle lucide-grip-vertical size-3.5 cursor-grab text-ink-gray-5"
@@ -58,6 +58,7 @@
 			<Combobox
 				:options="addableFields"
 				:modelValue="null"
+				:placeholder="__('Select field')"
 				@update:selectedOption="addField"
 			>
 				<template #trigger>

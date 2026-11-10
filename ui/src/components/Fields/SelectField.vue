@@ -14,6 +14,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Select } from "frappe-ui";
+import { translate as __ } from "../../utils/translate";
 import type { FieldComponentEmits, FieldComponentProps } from "./types";
 
 const props = defineProps<FieldComponentProps>();
@@ -30,6 +31,6 @@ const value = computed<string | null>({
 
 /** Frappe `Select` options are a newline-joined string in meta. */
 const options = computed(() =>
-	(props.field.options ?? "").split("\n").map((o) => ({ label: o, value: o }))
+	(props.field.options ?? "").split("\n").map((o) => ({ label: __(o), value: o }))
 );
 </script>
