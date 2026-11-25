@@ -20,7 +20,8 @@ from frappe.utils import (
 	add_to_date,
 	cast,
 	cint,
-	get_email_address,
+	get_email_addresses,
+	get_user_display_id,
 	now_datetime,
 	nowdate,
 	validate_email_address,
@@ -455,7 +456,10 @@ def get_context(context):
 				if allow_update and not doc.flags.in_notification_update:
 					fieldname = self.set_property_after_alert
 					value = self.property_value
-					if doc.meta.get_field(fieldname).fieldtype in frappe.model.numeric_fieldtypes:
+					fieldtype = doc.meta.get_field(fieldname).fieldtype
+					if fieldtype in frappe.model.float_like_fields:
+						value = frappe.utils.flt(value)
+					elif fieldtype in frappe.model.numeric_fieldtypes:
 						value = frappe.utils.cint(value)
 
 					doc.reload()
@@ -664,7 +668,9 @@ def get_context(context):
 			user = doc.get(field)
 			mobile_no = frappe.get_value("User", user, "mobile_no")
 			if not mobile_no:
-				doc.log_error(_("Notification: user {0} has no Mobile number set").format(user))
+				doc.log_error(
+					_("Notification: user {0} has no Mobile number set").format(get_user_display_id(user))
+				)
 		elif option == "Customer":
 			customer = doc.get(field)
 			mobile_no = frappe.get_value("Customer", customer, "mobile_no")
@@ -680,6 +686,7 @@ def get_context(context):
 
 	def get_list_of_recipients(self, doc, context):
 		recipients = []
+		users = []
 		cc = []
 		bcc = []
 		for recipient in self.recipients:
@@ -692,17 +699,17 @@ def get_context(context):
 				)
 				if child_field:
 					for d in doc.get(child_field):
-						email_id = d.get(data_field)
-						if email_id == "Administrator":
-							email_id = get_email_address("Administrator")
-						if validate_email_address(email_id):
-							recipients.append(email_id)
+						value = d.get(data_field)
+						if _is_user_field(d, data_field):
+							users.append(value)
+						elif validate_email_address(value):
+							recipients.append(value)
 				# field from current doc
 				else:
 					email_ids_value = doc.get(data_field)
-					if email_ids_value == "Administrator":
-						email_ids_value = get_email_address("Administrator")
-					if validate_email_address(email_ids_value):
+					if _is_user_field(doc, data_field):
+						users.append(email_ids_value)
+					elif validate_email_address(email_ids_value):
 						email_ids = email_ids_value.replace(",", "\n")
 						recipients = recipients + email_ids.split("\n")
 
@@ -717,8 +724,9 @@ def get_context(context):
 					recipients = recipients + email.split("\n")
 
 		if self.send_to_all_assignees:
-			recipients = recipients + get_assignees(doc)
+			users.extend(get_assignees(doc))
 
+		recipients.extend(get_email_addresses(users))
 		return list(set(recipients)), list(set(cc)), list(set(bcc))
 
 	def get_receiver_list(self, doc, context, field_on_user="mobile_no", recipient_extractor_func=None):
@@ -852,8 +860,7 @@ def clear_notification_cache():
 
 @frappe.whitelist()
 def get_documents_for_today(notification: str):
-	notification = frappe.get_doc("Notification", notification)
-	notification.check_permission("read")
+	notification = frappe.read_doc("Notification", notification)
 	return [d.name for d in notification.get_documents_for_today()]
 
 
@@ -970,7 +977,12 @@ def get_comments_for_context(doc):
 	)
 	comments.sort(key=lambda c: c.creation)
 	return [
-		{"comment": truncate(c.content), "by": c.by or c.owner, "name": c.name} for c in comments[-100:]
+		{
+			"comment": truncate(c.content),
+			"by": c.by or frappe.utils.get_user_display_id(c.owner),
+			"name": c.name,
+		}
+		for c in comments[-100:]
 	] or None
 
 
@@ -999,6 +1011,14 @@ def get_assignees(doc):
 	)
 
 	return [d.allocated_to for d in assignees]
+
+
+def _is_user_field(doc, fieldname):
+	if fieldname == "owner":
+		return True
+
+	df = doc.meta.get_field(fieldname)
+	return bool(df and df.fieldtype == "Link" and df.options == "User")
 
 
 def get_emails_from_template(template, context):

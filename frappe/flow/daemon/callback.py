@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import frappe
 from frappe import _
+from frappe.auth import set_agent
 from frappe.flow.daemon.client import DaemonClient, DaemonError
 from frappe.flow.lib.session import call_on_complete, sync_with_retry
 from frappe.flow.lib.tool import Pending, ToolContext
@@ -25,7 +26,7 @@ JOB_TIMEOUT = 1500  # seconds a background tool may run, unless flow_background_
 DELIVERY_RETRY_DELAYS = (0, 1, 5)  # seconds before each try to post a result
 
 
-@frappe.whitelist(allow_guest=True, methods=["POST"])  # nosemgrep: guest-whitelisted-method
+@frappe.whitelist(allow_guest=True, methods=["POST"], rate_limit=None)  # nosemgrep: guest-whitelisted-method
 def callback(callback_type: str, **payload) -> dict:
 	"""Authenticate once, then hand the payload to its focused callback."""
 	_authenticate()
@@ -111,6 +112,7 @@ def _dispatch(
 	agent_doc = frappe.get_doc("Flow Agent", agent)
 	if not agent_doc.enabled:
 		return _error(_("The session's agent is disabled."))
+	set_agent(agent_doc.title, "Flow", "Flow Session", session_id)
 	tools = agent_doc.client_tools(session_id)
 	tool = next((tool for tool in tools if tool.name == name), None)
 	if tool is None:

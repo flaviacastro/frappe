@@ -390,10 +390,9 @@ def create_json_gz_file(data, dt, dn, report_name):
 
 
 @frappe.whitelist()
+@frappe.read_only()
 def download_attachment(dn: str, format: str):
-	pr = frappe.get_doc("Prepared Report", dn)
-	if not frappe.has_permission("Prepared Report", "read", doc=pr):
-		frappe.throw(frappe._("Cannot Download Report due to insufficient permissions"))
+	pr = frappe.read_doc("Prepared Report", dn)
 
 	data, file_name = pr.get_prepared_data(with_file_name=True, format=format)
 	frappe.local.response.filename = file_name[:-3]
@@ -441,7 +440,7 @@ def has_permission(doc, user):
 @frappe.whitelist()
 def enqueue_json_to_csv_conversion(prepared_report_name: str):
 	"""Call this to enqueue the conversion in background."""
-	frappe.get_doc("Prepared Report", prepared_report_name).check_permission("read")
+	frappe.read_doc("Prepared Report", prepared_report_name)
 	_enqueue_json_to_csv_conversion(prepared_report_name)
 
 
@@ -454,6 +453,8 @@ def convert_json_to_csv(prepared_report_name):
 
 	import csv
 	from io import StringIO
+
+	from frappe.utils.csvutils import escape_formula_injection
 
 	doc = frappe.get_doc("Prepared Report", prepared_report_name)
 	json_content, file_name = doc.get_prepared_data(with_file_name=True)
@@ -478,9 +479,11 @@ def convert_json_to_csv(prepared_report_name):
 	writer.writeheader()
 	for row in result:
 		if isinstance(row, dict):
-			writer.writerow({key: row.get(key, "") for key in fieldnames})
+			writer.writerow({key: escape_formula_injection(row.get(key, "")) for key in fieldnames})
 		else:
-			writer.writerow({field: row[idx] for idx, field in enumerate(fieldnames)})
+			writer.writerow(
+				{field: escape_formula_injection(row[idx]) for idx, field in enumerate(fieldnames)}
+			)
 
 	csv_content = output.getvalue().encode("utf-8")
 

@@ -9,6 +9,8 @@
  * the registry carries presentation metadata only, not a renderable component.
  * Mirrors the registry shape of `fieldTypes.ts` so the pattern is familiar.
  */
+import { translate as __ } from "../../../utils/translate";
+
 export interface UploadSource {
   key: string;
   label: string;
@@ -19,16 +21,16 @@ export interface UploadSource {
 }
 
 const sources: UploadSource[] = [
-  { key: "device", label: "Device", icon: "lucide-monitor" },
+  { key: "device", get label() { return __("Device"); }, icon: "lucide-monitor" },
   {
     key: "camera",
-    label: "Camera",
+    label: __("Camera"),
     icon: "lucide-camera",
     isAvailable: () =>
       typeof navigator !== "undefined" &&
       !!navigator.mediaDevices?.getUserMedia,
   },
-  { key: "link", label: "Link", icon: "lucide-link" },
+  { key: "link", label: __("Link"), icon: "lucide-link" },
 ];
 
 /** Add or replace a source by key. */

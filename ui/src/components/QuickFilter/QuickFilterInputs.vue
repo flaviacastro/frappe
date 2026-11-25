@@ -29,7 +29,7 @@
 			<!-- Check → a labelled checkbox (checked ⇔ equals "Yes"). -->
 			<Checkbox
 				v-if="field.fieldtype === 'Check'"
-				:label="field.label"
+				:label="__(field.label)"
 				:modelValue="quickValue(filters, field) as boolean"
 				@update:modelValue="(v: boolean) => setValue(field, v)"
 			/>
@@ -43,7 +43,7 @@
 					:is="valueControl(field).is"
 					v-bind="valueControl(field).props"
 					class="w-full"
-					:aria-label="field.label"
+					:aria-label="__(field.label)"
 					:modelValue="displayValue(field)"
 					@update:modelValue="(v: FilterValue) => setValue(field, v)"
 				>
@@ -75,7 +75,7 @@
 			v-if="hiddenCount > 0 || expanded"
 			class="shrink-0 whitespace-nowrap"
 			variant="subtle"
-			:label="expanded ? 'Show less' : `${hiddenCount} more`"
+			:label="expanded ? __('Show less') : __('{0} more', [hiddenCount])"
 			@click="expanded = !expanded"
 		>
 			<template #suffix>
@@ -101,6 +101,7 @@ import {
 	quickOperator,
 	quickValue,
 } from "./quickFilters";
+import { translate as __ } from "../../utils/translate";
 import type { Filter, FilterField, FilterOperator, FilterValue } from "../Filter/types";
 // Shared, fieldtype-aware value inputs (ADR-0004), same subset the Filter control
 // mounts. No form-context injections are provided, so deep-injection inputs fall
@@ -260,7 +261,7 @@ function setValue(field: FilterField, value: FilterValue) {
 }
 
 const operatorSymbol = (op: FilterOperator) => (op === "equals" ? "=" : "≈");
-const operatorLabel = (op: FilterOperator) => (op === "equals" ? "Equals" : "Like");
+const operatorLabel = (op: FilterOperator) => (op === "equals" ? __("Equals") : __("Like"));
 
 /** Flip the input's operator like ↔ equals on click (no menu). With a value, the
  *  stored condition flips in place under the new operator (and the override is
@@ -297,7 +298,7 @@ function bareField(field: FilterField, overrides: Partial<FieldMeta> = {}): Fiel
 		fieldname: field.fieldname,
 		fieldtype: field.fieldtype,
 		options: field.options,
-		placeholder: field.label,
+		placeholder: __(field.label),
 		...overrides,
 	};
 }
@@ -338,6 +339,6 @@ function valueControl(field: FilterField): ValueControl {
 /** With the toggle over its start, the text box keeps 2px between the toggle and the text. */
 function textControl(field: FilterField): ValueControl {
 	const inset = hasOperatorToggle(field) ? "[&_input]:ps-[26px]" : undefined;
-	return { is: TextInput, props: { type: "text", placeholder: field.label, class: inset } };
+	return { is: TextInput, props: { type: "text", placeholder: __(field.label), class: inset } };
 }
 </script>

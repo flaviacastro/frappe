@@ -88,8 +88,10 @@ class Browser:
 		self.create_browser_context()
 
 	def create_browser_context(self):
+		from frappe.utils.chromium.page import get_browser_context_params
+
 		# create browser context
-		result, error = self.session.send("Target.createBrowserContext", {"disposeOnDetach": True})
+		result, error = self.session.send("Target.createBrowserContext", get_browser_context_params())
 		if error:
 			raise RuntimeError(f"Error creating browser context: {error}")
 		self.browser_context_id = result["browserContextId"]
@@ -161,6 +163,9 @@ class Browser:
 			"page_info_page",
 			"page_info_frompage",
 			"page_info_topage",
+			"visible-last-page",
+			"visible-first-page",
+			"hidden-first-page",
 		]
 
 		# Loop through the classes to check
@@ -293,6 +298,14 @@ class Browser:
 			for style in print_format_css
 			if style.name in attrs
 			and (style.name not in PAGE_MARGIN_SIDES or re.fullmatch(f"0|{PAGE_LENGTH}", style.value.strip()))
+			and (
+				style.name not in ("page-width", "page-height")
+				or re.fullmatch(PAGE_LENGTH, style.value.strip())
+			)
+			and (
+				style.name != "header-spacing"
+				or re.fullmatch(rf"{PAGE_LENGTH}|[+-]?(\d*\.)?\d+", style.value.strip())
+			)
 		}
 		self.options.update(options)
 		self._set_page_size_from_print_format()

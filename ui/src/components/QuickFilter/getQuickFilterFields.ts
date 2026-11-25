@@ -1,3 +1,4 @@
+import { translate as __ } from "../../utils/translate";
 import type { RawMetaField } from "../FormLayout/types";
 import type { FilterField } from "../Filter/types";
 
@@ -14,7 +15,7 @@ const toQuickFilterField = (f: RawMetaField): FilterField => ({
  *  records, matching `getFilterableFields`); the quick controls treat it as
  *  free-text `like` by default — see `isNameField` in `quickFilters`. */
 const nameQuickFilterField = (doctype: string): FilterField => ({
-  label: "Name",
+  label: __("Name"),
   value: "name",
   fieldname: "name",
   fieldtype: "Link",

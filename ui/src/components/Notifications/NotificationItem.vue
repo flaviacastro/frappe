@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { Avatar, dayjs } from "frappe-ui";
+import { translate as __ } from "../../utils/translate";
 import type { NotificationItemProps, NotificationLog } from "./types";
 
 const props = defineProps<NotificationItemProps>();
@@ -10,7 +11,12 @@ const emit = defineEmits<{
 }>();
 
 const avatarLabel = computed(() =>
-	(props.notification.from_user || props.notification.type || "?").charAt(0)
+	(
+		props.notification.from_user_name ||
+		props.notification.from_user ||
+		props.notification.type ||
+		"?"
+	).charAt(0)
 );
 
 // title/description are HTML rendered via v-html. The backend sanitizes this content at write
@@ -48,7 +54,7 @@ function activate() {
 				class="absolute top-1/2 size-[5px] -translate-y-1/2 rounded-full bg-gray-800"
 				style="left: -10px"
 			>
-				<span class="sr-only">Unread</span>
+				<span class="sr-only">{{ __("Unread") }}</span>
 			</span>
 			<slot name="prefix" :notification="notification">
 				<Avatar :image="notification.from_user_image" :label="avatarLabel" size="lg" />

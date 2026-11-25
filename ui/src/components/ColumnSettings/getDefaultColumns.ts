@@ -1,10 +1,11 @@
+import { translate as __ } from "../../utils/translate";
 import type { RawMetaField } from "../FormLayout/types";
 import type { Column, SyntheticColumn } from "./types";
 
 /** The `name` standard field — the default leading column when the doctype has
  *  no `title_field`. The list always surfaces the record's identifier first (the
  *  column analog of the Name quick filter in `getQuickFilterFields`). */
-const nameColumn = (): Column => ({ fieldname: "name", label: "Name" });
+const nameColumn = (): Column => ({ fieldname: "name", label: __("Name") });
 
 /** The leading column for a default set: the doctype's `title_field` when set
  *  (Frappe surfaces the human-readable title in place of the opaque `name`),

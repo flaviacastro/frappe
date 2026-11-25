@@ -1636,6 +1636,8 @@ def in_words(integer: int, in_million=True) -> str:
 		ret = num2words(integer, lang="en")
 	except OverflowError:
 		ret = num2words(integer, lang="en")
+	if locale and locale.startswith("es"):
+		ret = re.sub(r"\b(veinti)?uno(?= mil| bill)", lambda m: "veintiún" if m.group(1) else "un", ret)
 	return ret.replace("-", " ")
 
 
@@ -2633,8 +2635,8 @@ def to_markdown(html: str) -> str:
 		pass
 
 
-def md_to_html(markdown_text: str) -> "UnicodeWithAttrs" | None:
-	"""Convert the given markdown text to HTML and returns it."""
+def md_to_html(markdown_text: str) -> "UnicodeWithAttrs":
+	"""Convert the given markdown text to HTML and returns it. Returns the text unconverted if markdown2 fails."""
 	from markdown2 import MarkdownError
 	from markdown2 import markdown as _markdown
 
@@ -2647,13 +2649,15 @@ def md_to_html(markdown_text: str) -> "UnicodeWithAttrs" | None:
 		"html-classes": {"table": "table table-bordered", "img": "screenshot"},
 	}
 
+	markdown_text = markdown_text or ""
 	try:
-		return UnicodeWithAttrs(_markdown(markdown_text or "", extras=extras))
-	except MarkdownError:
-		pass
+		return UnicodeWithAttrs(_markdown(markdown_text, extras=extras))
+	# markdown2 2.5.5 asserts on HTML tags that span lines: trentm/python-markdown2#686
+	except (MarkdownError, AssertionError):
+		return UnicodeWithAttrs(markdown_text)
 
 
-def markdown(markdown_text: str) -> "UnicodeWithAttrs" | None:
+def markdown(markdown_text: str) -> "UnicodeWithAttrs":
 	"""Convert the given markdown text to HTML and returns it."""
 	return md_to_html(markdown_text)
 
@@ -2698,6 +2702,8 @@ def guess_date_format(date_string: str) -> str:
 		r"%d/%b/%Y",
 		r"%d %b %Y",
 		r"%d %B %Y",
+		r"%d %b %y",
+		r"%d %B %y",
 		r"%d-%b-%Y",
 		r"%d-%b-%y",
 		r"%d-%m-%Y",
@@ -2870,8 +2876,8 @@ def validate_python_code(string: str, fieldname: str | None = None, is_expressio
 
 class UnicodeWithAttrs(str):
 	def __init__(self, text):
-		self.toc_html = text.toc_html
-		self.metadata = text.metadata
+		self.toc_html = getattr(text, "toc_html", None)
+		self.metadata = getattr(text, "metadata", None)
 
 
 def format_timedelta(o: datetime.timedelta | str) -> str:

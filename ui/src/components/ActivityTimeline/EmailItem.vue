@@ -8,7 +8,7 @@
 						<!-- sender email is hidden; surfaced on hover via tooltip -->
 						<Tooltip :text="email.data.sender">
 							<span class="min-w-0 truncate text-base font-medium text-ink-gray-6">{{
-								email?.author?.fullname || "Guest"
+								email?.author?.fullname || __("Guest")
 							}}</span>
 						</Tooltip>
 						<div class="flex items-center gap-2">
@@ -32,22 +32,30 @@
 						<TimeAgo :timestamp="email.timestamp" class="text-sm" />
 					</div>
 					<div
-						v-if="email.data.to || email.data.cc || email.data.bcc"
-						class="pb-2 text-p-sm text-ink-gray-5"
+						v-if="subject || email.data.to || email.data.cc || email.data.bcc"
+						class="flex flex-col gap-1 pb-3 text-p-base text-ink-gray-5"
 					>
-						<template
-							v-for="(val, label) in {
-								To: email.data.to,
-								cc: email.data.cc,
-								bcc: email.data.bcc,
-							}"
-							:key="label"
-						>
-							<span v-if="val" class="me-1.5">
-								<span class="me-1 text-ink-gray-7">{{ label }}:</span>
-								<span>{{ splitRecipients(val).join(", ") }}</span>
-							</span>
-						</template>
+						<div v-if="email.data.to || email.data.cc || email.data.bcc">
+							<template
+								v-for="row in [
+									{ key: 'to', label: __('To'), value: email.data.to },
+									{ key: 'cc', label: __('CC'), value: email.data.cc },
+									{ key: 'bcc', label: __('BCC'), value: email.data.bcc },
+								]"
+								:key="row.key"
+							>
+								<span v-if="row.value" class="me-1.5">
+									<span class="me-1">{{ row.label }}:</span>
+									<span class="text-ink-gray-7">{{
+										splitRecipients(row.value).join(", ")
+									}}</span>
+								</span>
+							</template>
+						</div>
+						<div v-if="subject">
+							<span class="me-1">{{ __("Subject") }}:</span>
+							<span class="text-ink-gray-8">{{ subject }}</span>
+						</div>
 					</div>
 				</slot>
 			</div>
@@ -77,8 +85,11 @@ import TimeAgo from "./TimeAgo.vue";
 import TimelineCard from "./TimelineCard.vue";
 import type { EmailItemProps } from "./types";
 import { splitRecipients } from "./utils";
+import { translate as __ } from "../../utils/translate";
 
 const props = defineProps<EmailItemProps>();
+
+const subject = computed(() => (props.hideSubject ? "" : props.email.data.subject));
 
 const status = computed(() => {
 	const deliveryStatus = props.email.data.deliveryStatus ?? "";

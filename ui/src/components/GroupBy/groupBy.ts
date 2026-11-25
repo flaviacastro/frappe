@@ -7,17 +7,33 @@ import type {
   GroupByField,
   GroupBySettings,
 } from "./types";
+import { translate as __ } from "../../utils/translate";
 
-export const AGGREGATE_FUNCTIONS: ReadonlyArray<{
+/** @deprecated Use `getAggregateFunctions()`, whose labels are translated. */
+export const AGGREGATE_FUNCTIONS = getAggregateFunctions();
+
+const AGGREGATE_FUNCTION_VALUES: ReadonlyArray<AggregateFunction> = [
+  "count",
+  "sum",
+  "avg",
+  "min",
+  "max",
+];
+
+// Lists with labels are built per call, not at import, so the labels pick up
+// translations loaded after this module is evaluated.
+export function getAggregateFunctions(): Array<{
   label: string;
   value: AggregateFunction;
-}> = [
-  { label: "Count", value: "count" },
-  { label: "Sum", value: "sum" },
-  { label: "Average", value: "avg" },
-  { label: "Min", value: "min" },
-  { label: "Max", value: "max" },
-];
+}> {
+  return [
+    { label: __("Count"), value: "count" },
+    { label: __("Sum"), value: "sum" },
+    { label: __("Average"), value: "avg" },
+    { label: __("Min"), value: "min" },
+    { label: __("Max"), value: "max" },
+  ];
+}
 
 /** Fieldtypes whose values make sensible groups, as desk's report view offers them;
  *  free text and long text don't. */
@@ -45,55 +61,62 @@ const NUMERIC_FIELDTYPES = new Set([
 const TIME_FIELDTYPES = new Set(["Date", "Datetime", "Time"]);
 
 /** Standard timestamps every doctype has, which min and max can run on. */
-const STANDARD_TIME_FIELDS: ReadonlyArray<GroupByField> = [
-  {
-    label: "Created On",
-    value: "creation",
-    fieldname: "creation",
-    fieldtype: "Datetime",
-  },
-  {
-    label: "Last Modified",
-    value: "modified",
-    fieldname: "modified",
-    fieldtype: "Datetime",
-  },
-];
+function getStandardTimeFields(): GroupByField[] {
+  return [
+    {
+      label: __("Created On"),
+      value: "creation",
+      fieldname: "creation",
+      fieldtype: "Datetime",
+    },
+    {
+      label: __("Last Modified"),
+      value: "modified",
+      fieldname: "modified",
+      fieldtype: "Datetime",
+    },
+  ];
+}
+
+/** The standard column holding a record's assignees, as a JSON list of users. */
+const ASSIGNED_TO = "_assign";
 
 /** Standard fields every doctype can be grouped by, after the Meta fields: desk's
  *  standard fields of a groupable fieldtype, less `name` and `idx`. */
-const STANDARD_GROUP_FIELDS: ReadonlyArray<GroupByField> = [
-  {
-    label: "Created By",
-    value: "owner",
-    fieldname: "owner",
-    fieldtype: "Link",
-    options: "User",
-  },
-  {
-    label: "Last Modified By",
-    value: "modified_by",
-    fieldname: "modified_by",
-    fieldtype: "Link",
-    options: "User",
-  },
-  {
-    label: "Tags",
-    value: "_user_tags",
-    fieldname: "_user_tags",
-    fieldtype: "Data",
-  },
-  {
-    label: "Document Status",
-    value: "docstatus",
-    fieldname: "docstatus",
-    fieldtype: "Int",
-  },
-];
+function getStandardGroupFields(): GroupByField[] {
+  return [
+    {
+      label: __("Created By"),
+      value: "owner",
+      fieldname: "owner",
+      fieldtype: "Link",
+      options: "User",
+    },
+    {
+      label: __("Last Modified By"),
+      value: "modified_by",
+      fieldname: "modified_by",
+      fieldtype: "Link",
+      options: "User",
+    },
+    {
+      label: __("Tags"),
+      value: "_user_tags",
+      fieldname: "_user_tags",
+      fieldtype: "Data",
+    },
+    {
+      label: __("Document Status"),
+      value: "docstatus",
+      fieldname: "docstatus",
+      fieldtype: "Int",
+    },
+  ];
+}
 
 function toField(f: RawMetaField): GroupByField {
   return {
-    label: f.label as string,
+    label: __(f.label as string),
     value: f.fieldname,
     fieldname: f.fieldname,
     fieldtype: f.fieldtype,
@@ -110,13 +133,13 @@ function isQueryable(f: RawMetaField): boolean {
  *  then the standard fields, less any fieldnames in `exclude`. */
 export function getGroupByFields(
   fields: RawMetaField[],
-  exclude: string[] = []
+  exclude: string[] = [],
 ): GroupByField[] {
   return [
     ...fields
       .filter((f) => isQueryable(f) && GROUPABLE_FIELDTYPES.has(f.fieldtype))
       .map(toField),
-    ...STANDARD_GROUP_FIELDS,
+    ...getStandardGroupFields(),
   ].filter((f) => !exclude.includes(f.fieldname));
 }
 
@@ -127,7 +150,7 @@ export function getGroupByFields(
 export function getAggregateFields(
   fields: RawMetaField[],
   fn: AggregateFunction,
-  exclude: string[] = []
+  exclude: string[] = [],
 ): GroupByField[] {
   if (fn === "count") return [];
   const allowsTimes = fn === "min" || fn === "max";
@@ -138,29 +161,29 @@ export function getAggregateFields(
         isQueryable(f) &&
         (NUMERIC_FIELDTYPES.has(f.fieldtype) ||
           (allowsRating && f.fieldtype === "Rating") ||
-          (allowsTimes && TIME_FIELDTYPES.has(f.fieldtype)))
+          (allowsTimes && TIME_FIELDTYPES.has(f.fieldtype))),
     )
     .map(toField);
   return (
-    allowsTimes ? [...metaFields, ...STANDARD_TIME_FIELDS] : metaFields
+    allowsTimes ? [...metaFields, ...getStandardTimeFields()] : metaFields
   ).filter((f) => !exclude.includes(f.fieldname));
 }
 
 /** Field lookup for labels and formatting, covering the standard fields. */
 export function findGroupByField(
   fields: RawMetaField[],
-  fieldname: string
+  fieldname: string,
 ): GroupByField | undefined {
   const meta = fields.find((f) => f.fieldname === fieldname);
   if (meta) return toField(meta);
-  return [...STANDARD_GROUP_FIELDS, ...STANDARD_TIME_FIELDS].find(
+  return [...getStandardGroupFields(), ...getStandardTimeFields()].find(
     (f) => f.fieldname === fieldname
   );
 }
 
 /** Whether an aggregate has everything its function needs. */
 export function isCompleteAggregate(
-  aggregate: AggregateDraft
+  aggregate: AggregateDraft,
 ): aggregate is Aggregate {
   return aggregate.function === "count" || Boolean(aggregate.fieldname);
 }
@@ -180,12 +203,12 @@ export function columnId(column: string | Aggregate): string {
 export function isAggregateTaken(
   aggregates: AggregateDraft[],
   index: number,
-  candidate: AggregateDraft
+  candidate: AggregateDraft,
 ): boolean {
   if (!isCompleteAggregate(candidate)) return false;
   const id = columnId(candidate);
   return aggregates.some(
-    (a, i) => i !== index && isCompleteAggregate(a) && columnId(a) === id
+    (a, i) => i !== index && isCompleteAggregate(a) && columnId(a) === id,
   );
 }
 
@@ -222,10 +245,15 @@ function orderBy(groupBy: GroupBySettings): string {
     .map((f) => `${f} asc`);
   if (!sort) return tieBreakers.join(", ");
   const index = groupBy.aggregates.findIndex(
-    (a) => columnId(a) === sort.fieldname
+    (a) => columnId(a) === sort.fieldname,
   );
   const column = index >= 0 ? aggregateKey(index) : sort.fieldname;
   return [`${column} ${sort.direction}`, ...tieBreakers].join(", ");
+}
+
+/** Grouped by assignee, `serializeGroupBy`'s arguments go to `frappe.desk.listview.get_assignee_groups`. */
+export function groupsByAssignee(groupBy: GroupBySettings): boolean {
+  return groupBy.fields.includes(ASSIGNED_TO);
 }
 
 /** The arguments for `frappe.client.get_list` that fetch one row per group: the
@@ -249,13 +277,13 @@ export function serializeGroupBy(groupBy: GroupBySettings): {
  *  every matching record, ungrouped, so an average or a max is the true one rather
  *  than a sum of the groups'. `null` when there's nothing to total. */
 export function serializeGroupByTotals(
-  groupBy: GroupBySettings
+  groupBy: GroupBySettings,
 ): { fields: Record<string, string>[] } | null {
   const { aggregates } = groupBy;
   return aggregates.length ? { fields: aggregateFields(aggregates) } : null;
 }
 
-const FUNCTIONS = new Set(AGGREGATE_FUNCTIONS.map((f) => f.value));
+const FUNCTIONS = new Set(AGGREGATE_FUNCTION_VALUES);
 
 function isAggregate(value: unknown): value is Aggregate {
   if (!value || typeof value !== "object") return false;
@@ -274,7 +302,7 @@ function parseSort(raw: unknown): Sort[] | undefined {
     (s): s is Sort =>
       Boolean(s) &&
       typeof s.fieldname === "string" &&
-      (s.direction === "asc" || s.direction === "desc")
+      (s.direction === "asc" || s.direction === "desc"),
   );
   return sort.length ? [{ ...sort[0] }] : undefined;
 }
@@ -282,7 +310,7 @@ function parseSort(raw: unknown): Sort[] | undefined {
 function parseWidths(raw: unknown): Record<string, string> | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const widths = Object.fromEntries(
-    Object.entries(raw).filter(([, width]) => typeof width === "string")
+    Object.entries(raw).filter(([, width]) => typeof width === "string"),
   ) as Record<string, string>;
   return Object.keys(widths).length ? widths : undefined;
 }

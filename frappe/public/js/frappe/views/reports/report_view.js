@@ -329,6 +329,7 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 			translations: frappe.utils.datatable.get_translations(),
 			checkboxColumn: true,
 			inlineFilters: true,
+			filterMode: "fuzzy",
 			noDataMessage: __("No matching entries in the current results"),
 			cellHeight: 35,
 			direction: frappe.utils.is_rtl() ? "rtl" : "ltr",
@@ -1667,6 +1668,7 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 
 						total_data["name"] = __("Total");
 						total_data.is_total_row = true;
+						total_data._is_report_total = true;
 						rows_in_order.push(total_data);
 					}
 
@@ -1768,7 +1770,12 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 					const selected_items = this.get_checked_items(true);
 
 					let extra_fields = [];
-					if (this.list_view_settings.disable_count) {
+					if (
+						this.list_view_settings.disable_count ||
+						(this.count_upper_bound &&
+							(this.total_count == this.count_upper_bound ||
+								this.total_count == null))
+					) {
 						extra_fields = [
 							{
 								fieldtype: "Check",
@@ -1944,8 +1951,8 @@ frappe.views.ReportView = class ReportView extends frappe.views.ListView {
 				label: __("User Permissions"),
 				action: () => {
 					const args = {
-						doctype: "Report",
-						name: this.report_name,
+						allow: "Report",
+						for_value: this.report_name,
 					};
 					frappe.set_route("List", "User Permission", args);
 				},

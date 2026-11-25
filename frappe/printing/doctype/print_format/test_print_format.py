@@ -222,6 +222,28 @@ class TestPrintFormatBuilderElements(IntegrationTestCase):
 		# no value -> block is skipped entirely
 		self.assertNotIn('class="field print-barcode', self.render(df | {"barcode_value": ""}))
 
+	def test_ean_barcode_rejects_a_wrong_check_digit(self):
+		from frappe.utils.print_format_generator import get_barcode
+
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+		self.assertTrue(get_barcode("5901234123457", "EAN13"))
+		self.assertIsNone(get_barcode("5901234123450", "EAN13"))
+
+	def test_isbn_barcode_accepts_hyphens(self):
+		from frappe.utils.print_format_generator import get_barcode
+
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+		self.assertEqual(get_barcode("978-0-306-40615-7", "ISBN13"), get_barcode("9780306406157", "ISBN13"))
+
+	def test_gs1_barcode_with_brackets_prints_nothing(self):
+		from frappe.utils.print_format_generator import get_barcode
+
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+		self.assertIsNone(get_barcode("(01)09501101530003", "GS1_128"))
+
 	def test_qr_code(self):
 		import base64
 
@@ -894,6 +916,85 @@ class TestClassicConverter(IntegrationTestCase):
 		format_data = frappe.db.get_value("Print Format", self.FORMAT_NAME, "format_data")
 		self.assertEqual(frappe.parse_json(format_data).get("page"), {"size": "A5"})
 
+	def test_repair_decodes_converted_print_designer_labels(self):
+		from frappe.patches.v16_0.repair_converted_labels import execute
+
+		doc = self.make_classic_format()
+		fields = [
+			{"label": "In Words :&nbsp;", "fieldname": "first_name"},
+			{"label": "Roles", "fieldname": "roles", "table_columns": [{"label": "R&amp;D"}]},
+		]
+		doc.db_set(
+			{
+				"print_format_builder_beta": 1,
+				"format_data": frappe.as_json({"sections": [{"columns": [{"fields": fields}]}]}),
+			}
+		)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+
+		execute()
+
+		format_data = frappe.db.get_value("Print Format", self.FORMAT_NAME, "format_data")
+		repaired = frappe.parse_json(format_data)["sections"][0]["columns"][0]["fields"]
+		self.assertEqual(repaired[0]["label"], "In Words")
+		self.assertEqual(repaired[1]["table_columns"][0]["label"], "R&D")
+
+	def test_repair_decodes_labels_in_builder_draft(self):
+		from frappe.patches.v16_0.repair_converted_labels import execute
+
+		doc = self.make_classic_format()
+		fields = [{"label": "In Words :&nbsp;", "fieldname": "first_name"}]
+		format_data = frappe.as_json({"sections": [{"columns": [{"fields": fields}]}]})
+		doc.db_set(
+			{
+				"print_format_builder_beta": 1,
+				"format_data": format_data,
+				"draft_data": frappe.as_json({"format_data": format_data, "margin_top": 25}),
+			}
+		)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+
+		execute()
+
+		draft = frappe.parse_json(frappe.db.get_value("Print Format", self.FORMAT_NAME, "draft_data"))
+		repaired = frappe.parse_json(draft.format_data)["sections"][0]["columns"][0]["fields"]
+		self.assertEqual(repaired[0]["label"], "In Words")
+		self.assertEqual(draft.margin_top, 25)
+
+	def test_repair_decodes_labels_in_custom_html(self):
+		from frappe.patches.v16_0.repair_converted_labels import execute
+
+		doc = self.make_classic_format()
+		fields = [
+			{
+				"fieldtype": "HTML",
+				"html": '<span style="color: red;">Terms &amp;amp; Conditions :&amp;nbsp;</span> '
+				"{{ doc.get_formatted('first_name') }}"
+				'<th width="50%" style="">R&amp;amp;D</th><p>Tom &amp;amp; Co</p>',
+			}
+		]
+		doc.db_set(
+			{
+				"print_format_builder_beta": 1,
+				"format_data": frappe.as_json({"sections": [{"columns": [{"fields": fields}]}]}),
+			}
+		)
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+
+		execute()
+
+		format_data = frappe.db.get_value("Print Format", self.FORMAT_NAME, "format_data")
+		repaired = frappe.parse_json(format_data)["sections"][0]["columns"][0]["fields"]
+		self.assertEqual(
+			repaired[0]["html"],
+			'<span style="color: red;">Terms &amp; Conditions :&nbsp;</span> '
+			"{{ doc.get_formatted('first_name') }}"
+			'<th width="50%" style="">R&amp;D</th><p>Tom &amp;amp; Co</p>',
+		)
+
 	def test_migration_skips_corrupt_format(self):
 		"""A format with unparseable format_data is skipped, not fatal to the run."""
 		from frappe.printing.doctype.print_format.classic_converter import migrate_all_classic_formats
@@ -920,6 +1021,26 @@ class TestClassicConverter(IntegrationTestCase):
 
 
 class TestPrintDesignerConverter(IntegrationTestCase):
+	def test_print_designer_barcode_built_from_fields_keeps_its_value(self):
+		from frappe.printing.doctype.print_format.print_designer_converter import (
+			convert_print_designer_format,
+		)
+
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+		barcode = {"type": "barcode", "barcodeFormat": "code128", "value": "{{ doc.title }}-{{ doc.name }}"}
+		doc = frappe.get_doc(
+			{
+				"doctype": "Print Format",
+				"doc_type": "Note",
+				"print_designer_body": frappe.as_json([{"childrens": [barcode]}]),
+			}
+		)
+
+		layout, _notes = convert_print_designer_format(doc)
+
+		self.assertEqual(layout["sections"][0]["columns"][0]["fields"][0]["barcode_value"], "{title}-{name}")
+
 	def test_print_designer_barcode_keeps_its_type(self):
 		from frappe.printing.doctype.print_format.print_designer_converter import (
 			convert_print_designer_format,
@@ -929,7 +1050,8 @@ class TestPrintDesignerConverter(IntegrationTestCase):
 		frappe.set_user("test@example.com")
 		barcodes = [
 			{"type": "barcode", "barcodeFormat": "code39", "value": "{{ doc.name }}"},
-			{"type": "barcode", "barcodeFormat": "ean13", "value": "4006381333931", "startX": 400},
+			{"type": "barcode", "barcodeFormat": "ean13", "value": "4006381333931", "startX": 200},
+			{"type": "barcode", "barcodeFormat": "issn", "value": "4006381333931", "startX": 400},
 		]
 		doc = frappe.get_doc(
 			{
@@ -942,8 +1064,8 @@ class TestPrintDesignerConverter(IntegrationTestCase):
 		layout, notes = convert_print_designer_format(doc)
 
 		columns = layout["sections"][0]["columns"]
-		self.assertEqual([c["fields"][0]["barcode_format"] for c in columns], ["CODE39", "CODE128"])
-		self.assertIn("The EAN13 barcode type was changed to CODE128.", notes)
+		self.assertEqual([c["fields"][0]["barcode_format"] for c in columns], ["CODE39", "EAN13", "CODE128"])
+		self.assertIn("The ISSN barcode type was changed to CODE128.", notes)
 
 	def test_print_designer_linked_image_prints_the_linked_document_image(self):
 		from frappe.printing.doctype.print_format.print_designer_converter import (
@@ -973,6 +1095,37 @@ class TestPrintDesignerConverter(IntegrationTestCase):
 		html = layout["sections"][0]["columns"][0]["fields"][0]["html"]
 		todo = frappe.get_doc({"doctype": "ToDo", "allocated_to": "Administrator"})
 		self.assertIn("/files/admin.png", frappe.render_template(html, {"doc": todo}))
+
+	def test_print_designer_barcode_beside_text_prints_an_image(self):
+		from frappe.printing.doctype.print_format.print_designer_converter import (
+			convert_print_designer_format,
+		)
+		from frappe.utils.print_format_generator import get_barcode
+
+		self.addCleanup(frappe.set_user, "Administrator")
+		frappe.set_user("test@example.com")
+		box = {
+			"type": "rectangle",
+			"childrens": [
+				{"type": "text", "content": "Shelf"},
+				{"type": "barcode", "barcodeFormat": "code128", "value": "{{ doc.title }}"},
+			],
+		}
+		doc = frappe.get_doc(
+			{
+				"doctype": "Print Format",
+				"doc_type": "Note",
+				"print_designer_body": frappe.as_json([{"childrens": [box]}]),
+			}
+		)
+
+		layout, _notes = convert_print_designer_format(doc)
+
+		html = layout["sections"][0]["columns"][0]["fields"][0]["html"]
+		note = frappe.get_doc({"doctype": "Note", "title": "_Test Note"})
+		self.assertIn(
+			"data:image/svg+xml", frappe.render_template(html, {"doc": note, "get_barcode": get_barcode})
+		)
 
 
 class TestPrintFormatChildTableVisibility(IntegrationTestCase):

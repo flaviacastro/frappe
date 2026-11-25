@@ -1,5 +1,6 @@
 import { createResource } from "frappe-ui";
 import { computed, reactive, ref, type Ref } from "vue";
+import { translate as __ } from "../../utils/translate";
 import type { Activity, CustomActivity, Pagination } from "./types";
 
 /** How far back each paged source has been read; everything else arrives whole on first load. */
@@ -124,7 +125,7 @@ export function createHistoryPagination(
     // in-feed row above the oldest paged row; the copy lives here, not in the component
     loadMore: {
       position: "inline" as const,
-      label: "Show previous activity",
+      label: __("Show previous activity"),
       icon: "lucide-chevrons-up",
     },
   });

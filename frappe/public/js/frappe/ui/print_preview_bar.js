@@ -40,8 +40,23 @@ frappe.ui.PrintPreviewBar = class PrintPreviewBar {
 		this.frame = frame;
 		this.pages = [];
 		this.zoom_style = doc.head.appendChild(doc.createElement("style"));
+		// an image, even a transparent one, stops the body's white from filling the whole frame
+		doc.head.appendChild(doc.createElement("style")).textContent =
+			"@media screen { :root { background: linear-gradient(transparent, transparent); } }";
 		doc.addEventListener("scroll", () => this.update_page_label());
 		doc.defaultView.addEventListener("resize", () => this.apply_zoom());
+		doc.addEventListener(
+			"wheel",
+			(e) => {
+				if (!e.ctrlKey) return;
+				e.preventDefault();
+				this.zoom_set_by_user = true;
+				const scale = Math.min(1.25, Math.max(0.8, Math.exp(-e.deltaY / 100)));
+				this.zoom = Math.min(2, Math.max(0.5, this.zoom * scale));
+				this.apply_zoom();
+			},
+			{ passive: false }
+		);
 		if (fit && !this.zoom_set_by_user) this.fit(1);
 		this.apply_zoom();
 
@@ -119,9 +134,14 @@ frappe.ui.PrintPreviewBar = class PrintPreviewBar {
 				? frame_width - rect.right - scroll - parseFloat(style.marginRight)
 				: rect.left + scroll - parseFloat(style.marginLeft);
 			const side = `${Math.max(-offset, (frame_width - width * this.zoom) / 2 - offset)}px`;
+			const bar = this.$wrapper[0];
+			const bottom =
+				container.offsetHeight * (this.zoom - 1) +
+				bar.offsetHeight +
+				2 * parseFloat(getComputedStyle(bar).bottom);
 			this.zoom_style.textContent = `@media screen { .preview-pages {
 				width: ${width}px;
-				margin: 0 ${rtl ? side : 0} ${container.offsetHeight * (this.zoom - 1)}px ${rtl ? 0 : side};
+				margin: 0 ${rtl ? side : 0} ${bottom}px ${rtl ? 0 : side};
 				transform: scale(${this.zoom});
 				transform-origin: ${rtl ? "100% 0" : "0 0"};
 			} }`;

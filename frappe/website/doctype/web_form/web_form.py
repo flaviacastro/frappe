@@ -468,6 +468,9 @@ def get_context(context):
 			if field.fieldtype == "Select" and field.options:
 				messages.extend(field.options.split("\n"))
 
+		for field in context.web_form_doc.get("web_form_fields", []):
+			messages.extend(df.get("label") for df in field.get("fields") or [])
+
 		# When at least one field in self.web_form_fields has fieldtype "Table" then add "No data" to messages
 		if any(field.fieldtype == "Table" for field in self.web_form_fields):
 			messages.extend(
@@ -1162,7 +1165,7 @@ def check_webform_perm(doctype, name):
 			return True
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["GET", "POST"], rate_limit=None)  # nosemgrep: guest-whitelisted-method  # fmt: skip
 @frappe.read_only()
 def get_web_form_filters(web_form_name: str):
 	web_form = frappe.get_doc("Web Form", web_form_name)
@@ -1170,7 +1173,7 @@ def get_web_form_filters(web_form_name: str):
 	return [field for field in web_form.web_form_fields if field.show_in_filter]
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["GET"])  # nosemgrep: guest-whitelisted-method
 @rate_limit(key="web_form", limit=10, seconds=60)
 @frappe.read_only()
 def get_web_form_list(
@@ -1231,7 +1234,8 @@ def get_web_form_list(
 	)
 
 
-@frappe.whitelist(allow_guest=True)
+@frappe.whitelist(allow_guest=True, methods=["GET", "POST"])  # nosemgrep: guest-whitelisted-method
+@rate_limit(key="web_form_name", limit=30, seconds=60)
 @frappe.read_only()
 def get_form_data(
 	doctype: str,
@@ -1241,6 +1245,9 @@ def get_form_data(
 ):
 	web_form = frappe.get_doc("Web Form", web_form_name)
 	web_form.raise_if_unpublished()
+
+	if doctype != web_form.doc_type:
+		frappe.throw(_("Not Permitted"), frappe.PermissionError)
 
 	if web_form.login_required and frappe.session.user == "Guest":
 		frappe.throw(_("Not Permitted"), frappe.PermissionError)
@@ -1259,11 +1266,12 @@ def get_form_data(
 		docname = frappe.db.get_value(doctype, {"owner": frappe.session.user}, "name")
 
 	if docname:
-		doc = frappe.get_doc(doctype, docname)
-		if web_form.has_web_form_permission(doctype, docname, ptype="read"):
-			out.doc = doc.copy_with_fieldlevel_read_permissions()
-		else:
+		if not frappe.db.exists(doctype, docname) or not web_form.has_web_form_permission(
+			doctype, docname, ptype="read"
+		):
 			frappe.throw(_("Not permitted"), frappe.PermissionError)
+
+		out.doc = frappe.get_doc(doctype, docname).copy_with_fieldlevel_read_permissions()
 
 	# For Table fields, server-side processing for meta
 	for field in out.web_form.web_form_fields:
